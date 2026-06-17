@@ -1,7 +1,3 @@
-CREATE DATABASE morar_bem;
-
-\c morar_bem
-
 CREATE TABLE imoveis (
   id SERIAL PRIMARY KEY,
   tipo VARCHAR(50) NOT NULL,

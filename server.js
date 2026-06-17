@@ -1,17 +1,19 @@
 const express = require('express');
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'morar_bem'
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 app.use(cors());
@@ -20,8 +22,8 @@ app.use(express.static('public'));
 
 app.get('/api/imoveis', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM imoveis ORDER BY id');
-    res.json(result.rows);
+    const [rows] = await pool.query('SELECT * FROM imoveis ORDER BY id');
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao buscar imóveis' });
@@ -36,11 +38,11 @@ app.post('/api/leads', async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      'INSERT INTO leads (imovel_id, telefone, data_criacao) VALUES ($1, $2, NOW()) RETURNING *',
+    const [result] = await pool.query(
+      'INSERT INTO leads (imovel_id, telefone, data_criacao) VALUES (?, ?, NOW())',
       [imovel_id, telefone]
     );
-    res.json({ success: true, lead: result.rows[0] });
+    res.json({ success: true, lead: result });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao registrar interesse' });
@@ -49,8 +51,8 @@ app.post('/api/leads', async (req, res) => {
 
 app.get('/api/leads', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM leads ORDER BY data_criacao DESC');
-    res.json(result.rows);
+    const [rows] = await pool.query('SELECT * FROM leads ORDER BY data_criacao DESC');
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao buscar leads' });
