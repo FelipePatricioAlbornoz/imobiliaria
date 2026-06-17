@@ -28,8 +28,8 @@ app.get('/api/imoveis', async (req, res) => {
     const [rows] = await pool.query('SELECT * FROM imoveis ORDER BY id');
     res.json(rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro ao buscar imóveis' });
+    console.error('IMOVEIS ERROR:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 
